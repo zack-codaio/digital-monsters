@@ -37,17 +37,26 @@ page.open(url, function(status) {
              * @typedef ProessedNode
              *
              *
-             *
-             *
              * @param {jQuery Node} node
              * @param {Array.<ProcessedNode>} nodeArray
              */
             function pushProcessedNode(node, nodeArray) {
                console.log('PUSH PROCESSED NODE');
+               // extract relevant information:
+               // xpath
+               // color
+               // height, width
+               // border
+               // tagname
+               // classname
                var processedNode = {};
+
+               // Push the node
+               nodeArray.push(processedNode);
 
                console.log(node);
 
+               // Recurse
                if (node.children()) {
                   console.log('ALL CHILDREN');
                   console.log(node.children().html());
@@ -60,9 +69,13 @@ page.open(url, function(status) {
                }
             }
 
-            // sort array
+            /**
+             * Sort an array of processed nodes
+             *
+             * @param {Array.<ProcessedNode>} nodeArray
+             */
             function sortArray(nodeArray) {
-
+               // _.sortBy(users, function(o) { return o.user; });
             }
 
          });
