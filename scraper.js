@@ -18,157 +18,168 @@ page.open(url, function(status) {
       console.log('Successfully connected to: ' + url);
 
       page.includeJs("http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js", function() {
-         page.evaluate(function() {
-            // console.log("$(\".explanation\").text() -> " + $(".explanation").text());
+         console.log('INJECTED JQUERY');
+         page.includeJs('http://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.12.0/lodash.min.js', function() {
+            console.log('INJECTED LODASH');
 
-            var nodeArray = [];
 
-            var root = $('body');
+            page.evaluate(function() {
+               console.log('REACHED EVALUATE');
+               // console.log("$(\".explanation\").text() -> " + $(".explanation").text());
 
-            pushProcessedNode(root, nodeArray);
-            console.log(nodeArray);
+               var nodeArray = [];
 
-            // XXX - lodash doesn't work, need to figure out how to use includeJs
-            // _.each(nodeArray, (node) => {
-            //    console.log(node.backgroundColor);
-            // });
+               var root = $('body');
 
-            weightSize(nodeArray, .5);
+               pushProcessedNode(root, nodeArray);
+               console.log(nodeArray);
 
-            for (var i = 0; i < nodeArray.length; i++) {
-               console.log('Node', i);
-               console.log(nodeArray[i].backgroundColor);
-               console.log(nodeArray[i].sizeWeight);
-               console.log();
-            }
-
-            // start at root node
-            // terminate if no children
-            // recurse on all children
-            // store node as xpath, color, height, width, border
-
-            /**
-             * Recursively processes and flattens the DOM tree.
-             *
-             * @typedef ProessedNode
-             *
-             *
-             * @param {jQuery Node} node
-             * @param {Array.<ProcessedNode>} nodeArray
-             */
-            function pushProcessedNode(node, nodeArray) {
-               // Push the node
-               var processedNode = processNode(node);
-               nodeArray.push(processedNode);
-
-               // Recurse
-               if (node.children()) {
-                  for (var i = 0; i < node.children().length; i++) {
-                     pushProcessedNode($(node.children()[i]), nodeArray);
-                  }
-               }
-            }
-
-            /**
-             * Extract data from the node and store it in a ProcessedNode object.
-             *
-             * @param {jQuery Node} node
-             * @returns {ProcessedNode}
-             */
-            function processNode(node) {
-               var processedNode = {};
-               // extract relevant information:
-               // xpath
-
-               // color
-               processedNode.backgroundColor = node.css('background');
-
-               // height, width
-               processedNode.width = node.width();
-               processedNode.height = node.height();
-
-               // border
-               // tagname
-               // classname
-               return processedNode;
-            }
-
-            /**
-             * Generate an XPath for a node by concatenating its selector to its
-             * parent's XPath.
-             *
-             * @param {ProcessedNode} parent
-             * @param {jQuery Node} node
-             * @returns {string}
-             */
-            function generateXPath(parent, node) {
-
-            }
-
-            /**
-             * Run a tf/idf filter on a node array. Is it possible to use color
-             * distance in addition to strict modality?
-             *
-             * XXX - would ideally want to look for img / video, other indicators
-             *    of visual interest.
-             *
-             * @param {Array.<ProcessedNode>}
-             * @returns {Array.<ProcessedNode>}
-             */
-            function weightColor(nodeArray) {
-               // for each node
-               // get color
-               // compare to "document color," however that might be defined
-               // assign colorWeight to the node
-            }
-
-            /**
-             * Assigns an interest based on the dimensions of each node.
-             *
-             * Might be an interesting candidate for a genetic algorithm.
-             * Might be intersting to compare to sibling nodes.
-             *
-             * @param {Array.<ProcessedNode>}
-             * @param {number} percentile 0-1 target for size.
-             * @returns {Array.<ProcessedNode>}
-             */
-            function weightSize(nodeArray, percentile) {
-               // Calculate size
-               for (var i = 0; i < nodeArray.length; i++) {
-                  var node = nodeArray[i];
-                  var width = node.width;
-                  var height = node.height;
-
-                  // XXX - naive
-                  node.sizeWeight = width * height;
-               }
-
-               // Order by size
-               // _.sortBy(nodeArray, (node) => {
-               //    return node.sizeWeight;
+               // XXX - lodash doesn't work, need to figure out how to use includeJs
+               // _.each(nodeArray, (node) => {
+               //    console.log(node.backgroundColor);
                // });
 
-               // Normalize
-               var targetIndex = Math.floor(nodeArray.length * percentile);
+               weightSize(nodeArray, .5);
 
                for (var i = 0; i < nodeArray.length; i++) {
-                  var node = nodeArray[i];
-                  var targetDistance = Math.abs(targetIndex - i);
-                  node.sizeWeight = node.sizeWeight * (targetDistance ^ 2);
+                  console.log('Node', i);
+                  console.log(nodeArray[i].backgroundColor);
+                  console.log(nodeArray[i].sizeWeight);
+                  console.log();
                }
-            }
 
-            /**
-             * Sort an array of processed nodes
-             *
-             * @param {Array.<ProcessedNode>} nodeArray
-             */
-            function sortArray(nodeArray) {
-               // _.sortBy(users, function(o) { return o.user; });
-            }
+               // start at root node
+               // terminate if no children
+               // recurse on all children
+               // store node as xpath, color, height, width, border
 
+               /**
+                * Recursively processes and flattens the DOM tree.
+                *
+                * @typedef ProessedNode
+                *
+                *
+                * @param {jQuery Node} node
+                * @param {Array.<ProcessedNode>} nodeArray
+                */
+               function pushProcessedNode(node, nodeArray) {
+                  // Push the node
+                  var processedNode = processNode(node);
+                  nodeArray.push(processedNode);
+
+                  // Recurse
+                  if (node.children()) {
+                     for (var i = 0; i < node.children().length; i++) {
+                        pushProcessedNode($(node.children()[i]), nodeArray);
+                     }
+                  }
+               }
+
+               /**
+                * Extract data from the node and store it in a ProcessedNode object.
+                *
+                * @param {jQuery Node} node
+                * @returns {ProcessedNode}
+                */
+               function processNode(node) {
+                  var processedNode = {};
+                  // extract relevant information:
+                  // xpath
+
+                  // color
+                  processedNode.backgroundColor = node.css('background');
+
+                  // height, width
+                  processedNode.width = node.width();
+                  processedNode.height = node.height();
+
+                  // border
+                  // tagname
+                  // classname
+                  return processedNode;
+               }
+
+               /**
+                * Generate an XPath for a node by concatenating its selector to its
+                * parent's XPath.
+                *
+                * @param {ProcessedNode} parent
+                * @param {jQuery Node} node
+                * @returns {string}
+                */
+               function generateXPath(parent, node) {
+
+               }
+
+               /**
+                * Run a tf/idf filter on a node array. Is it possible to use color
+                * distance in addition to strict modality?
+                *
+                * XXX - would ideally want to look for img / video, other indicators
+                *    of visual interest.
+                *
+                * @param {Array.<ProcessedNode>}
+                * @returns {Array.<ProcessedNode>}
+                */
+               function weightColor(nodeArray) {
+                  // for each node
+                  // get color
+                  // compare to "document color," however that might be defined
+                  // assign colorWeight to the node
+               }
+
+               /**
+                * Assigns an interest based on the dimensions of each node.
+                *
+                * Might be an interesting candidate for a genetic algorithm.
+                * Might be intersting to compare to sibling nodes.
+                *
+                * @param {Array.<ProcessedNode>}
+                * @param {number} percentile 0-1 target for size.
+                * @returns {Array.<ProcessedNode>}
+                */
+               function weightSize(nodeArray, percentile) {
+                  // Calculate size
+                  for (var i = 0; i < nodeArray.length; i++) {
+                     var node = nodeArray[i];
+                     var width = node.width;
+                     var height = node.height;
+
+                     // XXX - naive
+                     node.sizeWeight = width * height;
+                  }
+
+                  // Order by size
+                  _.sortBy(nodeArray, function(node) {
+                     return node.sizeWeight;
+                  });
+
+                  // Normalize
+                  var targetIndex = Math.floor(nodeArray.length * percentile);
+
+                  for (var i = 0; i < nodeArray.length; i++) {
+                     var node = nodeArray[i];
+                     var targetDistance = 1 / Math.abs(targetIndex - i);
+                     console.log('Size Weight', node.sizeWeight);
+                     console.log('Target Distance', targetDistance);
+                     node.sizeWeight = node.sizeWeight * targetDistance;
+                     console.log('Normalized Size Weight', node.sizeWeight);
+                     console.log();
+                  }
+               }
+
+               /**
+                * Sort an array of processed nodes
+                *
+                * @param {Array.<ProcessedNode>} nodeArray
+                */
+               function sortArray(nodeArray) {
+                  // _.sortBy(users, function(o) { return o.user; });
+               }
+
+            });
+            phantom.exit(0);
          });
-         phantom.exit(0);
       });
    } else {
       console.error('exit, with errors');
