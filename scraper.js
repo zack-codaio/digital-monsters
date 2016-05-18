@@ -57,9 +57,26 @@ page.open(url, function(status) {
              * @param {Array.<ProcessedNode>} nodeArray
              */
             function pushProcessedNode(node, nodeArray) {
-               // console.log('PUSH PROCESSED NODE');
-               var processedNode = {};
+               // Push the node
+               var processedNode = processNode(node);
+               nodeArray.push(processedNode);
 
+               // Recurse
+               if (node.children()) {
+                  for (var i = 0; i < node.children().length; i++) {
+                     pushProcessedNode($(node.children()[i]), nodeArray);
+                  }
+               }
+            }
+
+            /**
+             * Extract data from the node and store it in a ProcessedNode object.
+             *
+             * @param {jQuery Node} node
+             * @returns {ProcessedNode}
+             */
+            function processNode(node) {
+               var processedNode = {};
                // extract relevant information:
                // xpath
 
@@ -70,28 +87,10 @@ page.open(url, function(status) {
                processedNode.width = node.width();
                processedNode.height = node.height();
 
-
                // border
                // tagname
                // classname
-
-
-               // Push the node
-               nodeArray.push(processedNode);
-
-               // console.log(node);
-
-               // Recurse
-               if (node.children()) {
-                  // console.log('ALL CHILDREN');
-                  // console.log(node.children().html());
-                  for (var i = 0; i < node.children().length; i++) {
-                     // console.log('CHILD '+i);
-                     // console.log(node.children()[i]);
-
-                     pushProcessedNode($(node.children()[i]), nodeArray);
-                  }
-               }
+               return processedNode;
             }
 
             /**
