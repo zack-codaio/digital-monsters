@@ -22,36 +22,54 @@ page.open(url, function(status) {
          page.includeJs('http://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.12.0/lodash.min.js', function() {
             console.log('INJECTED LODASH');
 
+            page.onCallback = function(data) {
+               console.log('ON CALLBACK');
+               if (data.exit) {
+                  console.log('RENDERING');
+                  page.render('testImage_render.png');
+                  phantom.exit();
+               }
+            }
 
             page.evaluate(function() {
                console.log('REACHED EVALUATE');
-               // console.log("$(\".explanation\").text() -> " + $(".explanation").text());
 
                var nodeArray = [];
 
                var root = $('body');
 
                pushProcessedNode(root, nodeArray);
-               console.log(nodeArray);
 
-               // XXX - lodash doesn't work, need to figure out how to use includeJs
-               // _.each(nodeArray, (node) => {
-               //    console.log(node.backgroundColor);
-               // });
-
+               // Weight
                weightSize(nodeArray, .5);
+               weightColor(nodeArray);
+               multiplyWeights(nodeArray);
 
-               for (var i = 0; i < nodeArray.length; i++) {
-                  console.log('Node', i);
-                  console.log(nodeArray[i].backgroundColor);
-                  console.log(nodeArray[i].sizeWeight);
-                  console.log();
+               // sort by weight
+               nodeArray = _.sortBy(nodeArray, function(node) {
+                  if (node.weight === Infinity) {
+                     return 0;
+                  }
+
+                  return node.weight;
+               });
+
+               // Print results
+               _.each(nodeArray, function(node) {
+                  // console.log(node.backgroundColor);
+                  console.log(node.sizeWeight);
+                  console.log(node.colorWeight);
+                  console.log(node.weight);
+                  console.log(' ');
+               });
+
+               // Highlight the top 5 choices
+               for (var i = nodeArray.length - 5; i < nodeArray.length; i++) {
+                  highlightNode(nodeArray[i]);
                }
 
-               // start at root node
-               // terminate if no children
-               // recurse on all children
-               // store node as xpath, color, height, width, border
+               // eventhandler to call render
+               window.callPhantom({ exit: true });
 
                /**
                 * Recursively processes and flattens the DOM tree.
@@ -83,11 +101,13 @@ page.open(url, function(status) {
                 */
                function processNode(node) {
                   var processedNode = {};
-                  // extract relevant information:
-                  // xpath
+
+                  // pointer to jQuery node
+                  processedNode.jQueryNode = node;
 
                   // color
-                  processedNode.backgroundColor = node.css('background');
+                  processedNode.background = node.css('background');
+                  processedNode.backgroundColor = node.css('background-color');
 
                   // height, width
                   processedNode.width = node.width();
@@ -97,18 +117,6 @@ page.open(url, function(status) {
                   // tagname
                   // classname
                   return processedNode;
-               }
-
-               /**
-                * Generate an XPath for a node by concatenating its selector to its
-                * parent's XPath.
-                *
-                * @param {ProcessedNode} parent
-                * @param {jQuery Node} node
-                * @returns {string}
-                */
-               function generateXPath(parent, node) {
-
                }
 
                /**
@@ -126,6 +134,45 @@ page.open(url, function(status) {
                   // get color
                   // compare to "document color," however that might be defined
                   // assign colorWeight to the node
+
+                  // Generate document frequency
+                  var documentColors = {};
+                  _.each(nodeArray, function(node) {
+                     var colorString = node.backgroundColor;
+                     var openingParen = colorString.indexOf('(');
+                     var closingParen = colorString.indexOf(')');
+                     var subColString = colorString.substring(openingParen + 1, closingParen);
+                     var rgba = subColString.split(', ');
+                     var concatRgba = _.reduce(rgba, function(str, number) {
+                        // This creates ambiguous strings that you can't
+                        // re-extract RGBA values from, but is sufficient for
+                        // figuring out which items are the black sheep.
+                        return str + number;
+                     });
+
+                     if (typeof documentColors[concatRgba] === 'undefined') {
+                        documentColors[concatRgba] = 1;
+                     } else {
+                        documentColors[concatRgba]++;
+                     }
+
+                     node.concatRgba = concatRgba;
+                  });
+
+                  // Log document frequency
+                  _.each(_.keys(documentColors), function(color) {
+                     // console.log(color, documentColors[color]);
+                  });
+
+                  // Assign colorWeight
+                  _.each(nodeArray, function(node) {
+                     // 1 / proportion of color in document
+                     // super naive and dumb, but will rank odd colors up
+                     var concatRgba = node.concatRgba;
+                     node.colorWeight = 1 / documentColors[concatRgba];
+                  });
+
+                  return nodeArray;
                }
 
                /**
@@ -160,25 +207,45 @@ page.open(url, function(status) {
                   for (var i = 0; i < nodeArray.length; i++) {
                      var node = nodeArray[i];
                      var targetDistance = 1 / Math.abs(targetIndex - i);
-                     console.log('Size Weight', node.sizeWeight);
-                     console.log('Target Distance', targetDistance);
+                     // console.log('Size Weight', node.sizeWeight);
+                     // console.log('Target Distance', targetDistance);
                      node.sizeWeight = node.sizeWeight * targetDistance;
-                     console.log('Normalized Size Weight', node.sizeWeight);
-                     console.log();
+                     // console.log('Normalized Size Weight', node.sizeWeight);
+                     // console.log();
                   }
+
+                  return nodeArray;
                }
 
                /**
-                * Sort an array of processed nodes
+                * Multiplies different weights together to create an
+                * aggregate weight.
                 *
                 * @param {Array.<ProcessedNode>} nodeArray
                 */
-               function sortArray(nodeArray) {
-                  // _.sortBy(users, function(o) { return o.user; });
+               function multiplyWeights(nodeArray) {
+                  _.each(nodeArray, function(node) {
+                     node.weight = node.sizeWeight * node.colorWeight * node.colorWeight;
+                  });
+               }
+
+               /**
+                * Draws a border on the DOM for a node.
+                *
+                * @param {ProcessedNode} node
+                */
+               function highlightNode(node) {
+                  console.log(node);
+                  console.log(node.jQueryNode);
+                  console.log(node.jQueryNode.css('border'));
+                  console.log(' ');
+
+                  node.jQueryNode.css('border', '3px solid red');
                }
 
             });
-            phantom.exit(0);
+
+            // phantom.exit(0);
          });
       });
    } else {
