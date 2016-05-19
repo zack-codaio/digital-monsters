@@ -1,10 +1,6 @@
-// Read the Phantom webpage '#intro' element text using jQuery and "includeJs"
-
-// http://www.juxtapoz.com/news/erotica/look-who-s-coming-to-tea-the-work-of-tina-lugo/
-
 'use strict';
 var page = require('webpage').create();
-var _ = require('lodash'); // XXX - don't know how to inject in using injectJS
+var _ = require('lodash');
 var $ = require('jQuery');
 
 page.onConsoleMessage = function(msg) {
@@ -12,6 +8,9 @@ page.onConsoleMessage = function(msg) {
 };
 
 var url = 'http://phantomjs.org/';
+var urlName = 'phantomJs';
+// var url = 'http://www.juxtapoz.com/news/erotica/look-who-s-coming-to-tea-the-work-of-tina-lugo/';
+// var urlName = 'juxtapozTinaLugo';
 
 page.open(url, function(status) {
    if (status === "success") {
@@ -26,7 +25,7 @@ page.open(url, function(status) {
                console.log('ON CALLBACK');
                if (data.exit) {
                   console.log('RENDERING');
-                  page.render('testImage_render.png');
+                  page.render('renderings/'+urlName+'_'+Date.now()+'.png');
                   phantom.exit();
                }
             }
@@ -41,7 +40,7 @@ page.open(url, function(status) {
                pushProcessedNode(root, nodeArray);
 
                // Weight
-               weightSize(nodeArray, .5);
+               weightSize(nodeArray, .2);
                weightColor(nodeArray);
                multiplyWeights(nodeArray);
 
@@ -169,7 +168,7 @@ page.open(url, function(status) {
                      // 1 / proportion of color in document
                      // super naive and dumb, but will rank odd colors up
                      var concatRgba = node.concatRgba;
-                     node.colorWeight = 1 / documentColors[concatRgba];
+                     node.colorWeight = 1 / documentColors[concatRgba] + .3;
                   });
 
                   return nodeArray;
@@ -225,7 +224,7 @@ page.open(url, function(status) {
                 */
                function multiplyWeights(nodeArray) {
                   _.each(nodeArray, function(node) {
-                     node.weight = node.sizeWeight * node.colorWeight * node.colorWeight;
+                     node.weight = node.sizeWeight * Math.pow(node.colorWeight, 1.3);
                   });
                }
 
@@ -237,10 +236,11 @@ page.open(url, function(status) {
                function highlightNode(node) {
                   console.log(node);
                   console.log(node.jQueryNode);
-                  console.log(node.jQueryNode.css('border'));
-                  console.log(' ');
+
 
                   node.jQueryNode.css('border', '3px solid red');
+                  console.log(node.jQueryNode.css('border'));
+                  console.log(' ');
                }
 
             });
